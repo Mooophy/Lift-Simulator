@@ -6,16 +6,21 @@
 
 #define semaphore HANDLE
 
+//wait for a semaphore
 void wait(semaphore h) 
-{     // wait for a semaphore
+{
     WaitForSingleObject(h, MAXLONG);
 }
 
-void signal(semaphore h) {   // signal a semaphore
+//signal a semaphore
+void signal(semaphore h) 
+{
     ReleaseSemaphore(h, 1, NULL);
 }
 
-semaphore create(int v) {    // create a semaphore with value v
+// create a semaphore with value v
+semaphore create(int v) 
+{
     return CreateSemaphore(NULL, (long)v, MAXLONG, NULL);
 }
 
@@ -45,7 +50,8 @@ int rand_seed = 123456;
 //
 //	Information about a floor in the building
 //
-typedef struct {
+typedef struct 
+{
     int waitingtogoup;    /* the number of people waiting to go up */
     int waitingtogodown;  /* the number of people waiting to go down */
     semaphore up_arrow;   /* people going up wait on this */
@@ -54,7 +60,8 @@ typedef struct {
 //
 //	Information about a lift
 //
-typedef struct {
+typedef struct 
+{
     int no;               /* which lift is it */
     int position;         /* which floor it is on */
     int direction;        /* going UP or DOWN */
@@ -66,10 +73,12 @@ typedef struct {
 //	Some global variables
 //
 Floor_info floor[NFLOORS];
+Lift_info* global_lift_ptr;
 //
 //	print a character c on the screen at position (x,y)
 //
-void char_at_xy(int x, int y, char c) {
+void char_at_xy(int x, int y, char c) 
+{
     gotoxy(x, y);
     Sleep(1);        // slow things down for NT
     printf("%c", c);  /* the char itself */
@@ -78,7 +87,8 @@ void char_at_xy(int x, int y, char c) {
 //	Tell everybody that is waiting to go in a certain direction
 // to get into the lift. If the lift was empty then move it in the correct direction.
 //
-void getintolift(Lift_info *l, int direction) {
+void getintolift(Lift_info *l, int direction) 
+{
     int *waiting;
     semaphore *s;
     if (direction == UP) {  /* if going up */
@@ -99,10 +109,13 @@ void getintolift(Lift_info *l, int direction) {
             (*waiting)--;       /* one less waiting */
             Sleep(GETINSPEED);  /* wait a short time */
 
-                                ////////////////////////////////////////////////////////////////////////////
-                                // ---   /* tell the person which lift it is */
-                                // ---   /* and wake them up */
-                                ////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////1 and 2
+        // ---   /* tell the person which lift it is */
+        // ---   /* and wake them up */
+            global_lift_ptr = l;
+            signal(s);
+        ////////////////////////////////////////////////////////////////////////////
+
         }
         else {
             break;
@@ -134,8 +147,8 @@ unsigned long CALLBACK lift_thread(void *p) {
             l.peopleinlift--;        /* one less in lift */
             l.stops[l.position]--;   /* one less waiting */
             Sleep(GETOUTSPEED);      /* wait a while */
-                                     ////////////////////////////////////////////////////////////////////////////
-                                     // ---     /* tell them to get out */
+            ////////////////////////////////////////////////////////////////////////////3
+            // ---     /* tell them to get out */
             signal(l.stopsem[l.position]);
             ////////////////////////////////////////////////////////////////////////////
             if (!l.stops[l.position]) /* if it was the last one */
@@ -167,26 +180,30 @@ unsigned long CALLBACK person_thread(void *p) {
         if (to > from) {	/* if we are going up */
             floor[from].waitingtogoup++;
             char_at_xy(NLIFTS * 4 + floor[from].waitingtogoup + floor[from].waitingtogodown, NFLOORS - from, 0xdc);
-            ////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////4
             // ---     /* wait for the lift to arrive */
+            wait(floor[from].up_arrow);
             ////////////////////////////////////////////////////////////////////////////
         }
         else {  /* if we are going down */
             floor[from].waitingtogodown++;
             char_at_xy(NLIFTS * 4 + floor[from].waitingtogodown
                 + floor[from].waitingtogoup, NFLOORS - from, 0xdc);
-            ////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////5
             // ---     /* wait for the lift to arrive */
+            wait(floor[from].down_arrow);
             ////////////////////////////////////////////////////////////////////////////
         }
-        ////////////////////////////////////////////////////////////////////////////
-        // --- l=  /* which lift are we geting in to */
+        ////////////////////////////////////////////////////////////////////////////6
+         //--- l=  /* which lift are we geting in to */
+        l = global_lift_ptr;
         ////////////////////////////////////////////////////////////////////////////
         l->stops[to]++;  /* press the button for the floor we want */
         if (l->stops[to] == 1)  /* light up the button if we were the first */
             char_at_xy(l->no * 4 + 1 + 2, NFLOORS - to, '-');
-        ////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////7
         // ---           /* wait until we get to the right floor */
+        wait(l->stopsem[to]);
         ////////////////////////////////////////////////////////////////////////////
         from = to;  /* we have reached our destination */
     }
