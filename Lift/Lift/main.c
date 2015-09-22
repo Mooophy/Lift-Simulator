@@ -6,7 +6,8 @@
 
 #define semaphore HANDLE
 
-void wait(semaphore h) {     // wait for a semaphore
+void wait(semaphore h) 
+{     // wait for a semaphore
     WaitForSingleObject(h, MAXLONG);
 }
 
@@ -98,10 +99,10 @@ void getintolift(Lift_info *l, int direction) {
             (*waiting)--;       /* one less waiting */
             Sleep(GETINSPEED);  /* wait a short time */
 
-            ////////////////////////////////////////////////////////////////////////////
-            // ---   /* tell the person which lift it is */
-            // ---   /* and wake them up */
-            ////////////////////////////////////////////////////////////////////////////
+                                ////////////////////////////////////////////////////////////////////////////
+                                // ---   /* tell the person which lift it is */
+                                // ---   /* and wake them up */
+                                ////////////////////////////////////////////////////////////////////////////
         }
         else {
             break;
@@ -133,8 +134,8 @@ unsigned long CALLBACK lift_thread(void *p) {
             l.peopleinlift--;        /* one less in lift */
             l.stops[l.position]--;   /* one less waiting */
             Sleep(GETOUTSPEED);      /* wait a while */
-            ////////////////////////////////////////////////////////////////////////////
-            // ---     /* tell them to get out */
+                                     ////////////////////////////////////////////////////////////////////////////
+                                     // ---     /* tell them to get out */
             signal(l.stopsem[l.position]);
             ////////////////////////////////////////////////////////////////////////////
             if (!l.stops[l.position]) /* if it was the last one */
@@ -176,16 +177,16 @@ unsigned long CALLBACK person_thread(void *p) {
                 + floor[from].waitingtogoup, NFLOORS - from, 0xdc);
             ////////////////////////////////////////////////////////////////////////////
             // ---     /* wait for the lift to arrive */
-           ////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////
         }
         ////////////////////////////////////////////////////////////////////////////
-    // --- l=  /* which lift are we geting in to */
+        // --- l=  /* which lift are we geting in to */
         ////////////////////////////////////////////////////////////////////////////
         l->stops[to]++;  /* press the button for the floor we want */
         if (l->stops[to] == 1)  /* light up the button if we were the first */
             char_at_xy(l->no * 4 + 1 + 2, NFLOORS - to, '-');
         ////////////////////////////////////////////////////////////////////////////
-    // ---           /* wait until we get to the right floor */
+        // ---           /* wait until we get to the right floor */
         ////////////////////////////////////////////////////////////////////////////
         from = to;  /* we have reached our destination */
     }
