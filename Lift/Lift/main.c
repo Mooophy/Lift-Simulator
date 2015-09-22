@@ -52,22 +52,22 @@ int rand_seed = 123456;
 //
 typedef struct 
 {
-    int waitingtogoup;    /* the number of people waiting to go up */
-    int waitingtogodown;  /* the number of people waiting to go down */
-    semaphore up_arrow;   /* people going up wait on this */
-    semaphore down_arrow; /* people going down wait on this */
+    int waitingtogoup;    
+    int waitingtogodown;  
+    semaphore up_arrow;   
+    semaphore down_arrow; 
 } Floor_info;
 //
-//	Information about a lift
+//	Lift
 //
 typedef struct 
 {
-    int no;               /* which lift is it */
-    int position;         /* which floor it is on */
-    int direction;        /* going UP or DOWN */
-    int peopleinlift;     /* number of people in the lift */
+    int no;               
+    int position;         
+    int direction;        
+    int peopleinlift;     
     int stops[NFLOORS];   /* for each stop how many people are waiting to get off */
-    semaphore stopsem[NFLOORS]; /* people in the lift wait on one of these */
+    semaphore stopsem[NFLOORS]; 
 } Lift_info;
 //
 //	Some global variables
@@ -80,8 +80,8 @@ Lift_info* global_lift_ptr;
 void char_at_xy(int x, int y, char c) 
 {
     gotoxy(x, y);
-    Sleep(1);        // slow things down for NT
-    printf("%c", c);  /* the char itself */
+    Sleep(1);        
+    printf("%c", c);  
 }
 //
 //	Tell everybody that is waiting to go in a certain direction
@@ -91,15 +91,18 @@ void getintolift(Lift_info *l, int direction)
 {
     int *waiting;
     semaphore *s;
-    if (direction == UP) {  /* if going up */
-        s = &floor[l->position].up_arrow;  /* use this semaphore */
-        waiting = &floor[l->position].waitingtogoup;  /* and this is the number waiting */
+    if (direction == UP) 
+    {  
+        s = &floor[l->position].up_arrow;  
+        waiting = &floor[l->position].waitingtogoup;  
     }
-    else {               /* if going down */
-        s = &floor[l->position].down_arrow; /* use this semaphore */
-        waiting = &floor[l->position].waitingtogodown; /* and this is the number waiting */
+    else 
+    {               
+        s = &floor[l->position].down_arrow; 
+        waiting = &floor[l->position].waitingtogodown; 
     }
-    while (*waiting) {    /* for all people waiting */
+    while (*waiting) 
+    {    
         if (!l->peopleinlift)  /* if the lift is empty */
             l->direction = direction; /* set direction */
         if (l->peopleinlift < MAXNOINLIFT && *waiting) {
@@ -109,15 +112,11 @@ void getintolift(Lift_info *l, int direction)
             (*waiting)--;       /* one less waiting */
             Sleep(GETINSPEED);  /* wait a short time */
 
-        ////////////////////////////////////////////////////////////////////////////1 and 2
-        // ---   /* tell the person which lift it is */
-        // ---   /* and wake them up */
-            global_lift_ptr = l;
-            signal(s);
-        ////////////////////////////////////////////////////////////////////////////
-
+            global_lift_ptr = l;    // tell the person which lift it is @1
+            signal(s);              // and wake them up @2 
         }
-        else {
+        else 
+        {
             break;
         }
     }
