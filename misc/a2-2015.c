@@ -97,8 +97,8 @@ void getintolift(Lift_info *l,int direction) {
 						 NFLOORS-l->position,' '); /* erase from screen */
 		(*waiting)--;       /* one less waiting */
 		Sleep(GETINSPEED);  /* wait a short time */
----   /* tell the person which lift it is */
----   /* and wake them up */
+// ---   /* tell the person which lift it is */
+// ---   /* and wake them up */
 	  }
 	  else {
 		 break;
@@ -130,7 +130,7 @@ unsigned long CALLBACK lift_thread(void *p) {
 		l.peopleinlift--;        /* one less in lift */
 		l.stops[l.position]--;   /* one less waiting */
 		Sleep(GETOUTSPEED);      /* wait a while */
----     /* tell them to get out */
+// ---     /* tell them to get out */
 		if(!l.stops[l.position]) /* if it was the last one */
 			char_at_xy(no*4+1+2,NFLOORS-l.position,' ');  /* remove the - */
 	 }
@@ -161,19 +161,19 @@ unsigned long CALLBACK person_thread(void *p) {
 		floor[from].waitingtogoup++;
 		char_at_xy(NLIFTS*4+ floor[from].waitingtogoup
 		 +floor[from].waitingtogodown,NFLOORS-from,0xdc);
----     /* wait for the lift to arrive */
+// ---     /* wait for the lift to arrive */
 	 }
 	 else {  /* if we are going down */
 		floor[from].waitingtogodown++;
 		char_at_xy(NLIFTS*4+floor[from].waitingtogodown
 		 +floor[from].waitingtogoup,NFLOORS-from,0xdc);
----     /* wait for the lift to arrive */
+// ---     /* wait for the lift to arrive */
 	 }
---- l=  /* which lift are we geting in to */
+// --- l=  /* which lift are we geting in to */
 	 l->stops[to]++;  /* press the button for the floor we want */
 	 if(l->stops[to]==1)  /* light up the button if we were the first */
 		char_at_xy(l->no*4+1+2,NFLOORS-to,'-');
----           /* wait until we get to the right floor */
+// ---           /* wait until we get to the right floor */
 	 from=to;  /* we have reached our destination */
   }
 }
@@ -221,5 +221,3 @@ int main() {
   Sleep(86400000); /* go to sleep for 86400 seconds (one day) */
   return(1);
 }
-
-
