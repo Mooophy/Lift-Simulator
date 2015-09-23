@@ -74,17 +74,17 @@ typedef struct
 //
 Floor_info floor[NFLOORS];
 Lift_info* global_lift_ptr;
-semaphore mutex_for_ostring;
+semaphore mutex_for_ostream;
 //
 //	print a character c on the screen at position (x,y)
 //
 void char_at_xy(int x, int y, char c) 
 {
-    wait(mutex_for_ostring);
+    wait(mutex_for_ostream);
     gotoxy(x, y);
     Sleep(1);        
     printf("%c", c);
-    signal(mutex_for_ostring);
+    signal(mutex_for_ostream);
 }
 //
 //	Tell everybody that is waiting to go in a certain direction
@@ -115,7 +115,7 @@ void getintolift(Lift_info *l, int direction)
             Sleep(GETINSPEED);  /* wait a short time */
 
             global_lift_ptr = l;    // tell the person which lift it is @1
-            signal(s);              // and wake them up @2 
+            signal(*s);              // and wake them up @2 
         }
         else 
         {
@@ -242,7 +242,7 @@ int main() {
         floor[i].down_arrow = create(0);
     }
     /* initialise any other semaphores */
-    mutex_for_ostring = create(1);
+    mutex_for_ostream = create(1);
     printbuilding();        /* print the buildong on the screen */
     for (i = 0; i < NLIFTS; i++)   /* create the lift threads */
         CreateThread(NULL, 0, lift_thread, (void *)i, 0, &id);
