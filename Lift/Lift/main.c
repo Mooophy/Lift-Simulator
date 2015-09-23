@@ -74,14 +74,17 @@ typedef struct
 //
 Floor_info floor[NFLOORS];
 Lift_info* global_lift_ptr;
+semaphore mutex_for_ostring;
 //
 //	print a character c on the screen at position (x,y)
 //
 void char_at_xy(int x, int y, char c) 
 {
+    wait(mutex_for_ostring);
     gotoxy(x, y);
     Sleep(1);        
-    printf("%c", c);  
+    printf("%c", c);
+    signal(mutex_for_ostring);
 }
 //
 //	Tell everybody that is waiting to go in a certain direction
@@ -107,8 +110,7 @@ void getintolift(Lift_info *l, int direction)
             l->direction = direction; /* set direction */
         if (l->peopleinlift < MAXNOINLIFT && *waiting) {
             l->peopleinlift++;  /* one more in the lift */
-            char_at_xy(NLIFTS * 4 + floor[l->position].waitingtogodown + floor[l->position].waitingtogoup,
-                NFLOORS - l->position, ' '); /* erase from screen */
+            char_at_xy(NLIFTS * 4 + floor[l->position].waitingtogodown + floor[l->position].waitingtogoup, NFLOORS - l->position, ' '); /* erase from screen */
             (*waiting)--;       /* one less waiting */
             Sleep(GETINSPEED);  /* wait a short time */
 
@@ -153,14 +155,14 @@ unsigned long CALLBACK lift_thread(void *p) {
             if (!l.stops[l.position]) /* if it was the last one */
                 char_at_xy(no * 4 + 1 + 2, NFLOORS - l.position, ' ');  /* remove the - */
         }
-        if (l.direction == UP || !l.peopleinlift)  /* if the lift is going up or is empty */
-            getintolift(&l, UP);      /* pick up passengers waiting to go up */
+        if (l.direction == UP || !l.peopleinlift)   /* if the lift is going up or is empty */
+            getintolift(&l, UP);                    /* pick up passengers waiting to go up */
         if (l.direction == DOWN || !l.peopleinlift) /* if the lift is going down or is empty */
-            getintolift(&l, DOWN);    /* pick up passengers waiting to go down */
+            getintolift(&l, DOWN);                  /* pick up passengers waiting to go down */
         char_at_xy(no * 4 + 1, NFLOORS - l.position, (char)(l.direction + 1 ? ' ' : 0xb3));  /* erase the lift on the screen */
-        l.position += l.direction;   /* move it */
+        l.position += l.direction;                  /* move it */
         if (l.position == 0 || l.position == NFLOORS - 1)  /* if it is at the top or bottom */
-            l.direction = -l.direction; /* change direction */
+            l.direction = -l.direction;                     /* change direction */
     }
 }
 //
@@ -240,7 +242,7 @@ int main() {
         floor[i].down_arrow = create(0);
     }
     /* initialise any other semaphores */
-
+    mutex_for_ostring = create(1);
     printbuilding();        /* print the buildong on the screen */
     for (i = 0; i < NLIFTS; i++)   /* create the lift threads */
         CreateThread(NULL, 0, lift_thread, (void *)i, 0, &id);
