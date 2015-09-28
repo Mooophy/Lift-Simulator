@@ -1,8 +1,12 @@
-#include <stddef.h>     //   159.335 Assignment 2
-#include <stdio.h>      //   Lift Simulator - M.Johnson 2015
-#include <stdlib.h>     //   This was written for GCC but it
-#include <windows.h>    //   may also work with other compilers
-#include <conio.h>      //   lines starting with --- are unfinished
+//
+//
+//
+
+#include <stddef.h>     
+#include <stdio.h>      
+#include <stdlib.h>     
+#include <windows.h>    
+#include <conio.h>      
 
 #define semaphore HANDLE
 
@@ -73,18 +77,18 @@ typedef struct
 //	Some global variables
 //
 Floor_info floor[NFLOORS];
-Lift_info* global_lift_ptr;
-semaphore mutex_for_ostream;
+Lift_info* global_lift_ptr;     // To pass the Lift_info pointer
+semaphore mutex_for_ostream;    // To lock IO stream
 //
 //	print a character c on the screen at position (x,y)
 //
 void char_at_xy(int x, int y, char c) 
 {
-    wait(mutex_for_ostream);
+    wait(mutex_for_ostream);    //lock IO stream
     gotoxy(x, y);
     Sleep(1);        
     printf("%c", c);
-    signal(mutex_for_ostream);
+    signal(mutex_for_ostream);  //release IO stream
 }
 //
 //	Tell everybody that is waiting to go in a certain direction
@@ -114,8 +118,8 @@ void getintolift(Lift_info *l, int direction)
             (*waiting)--;       /* one less waiting */
             Sleep(GETINSPEED);  /* wait a short time */
 
-            global_lift_ptr = l;    // tell the person which lift it is @1
-            signal(*s);              // and wake them up @2 
+            global_lift_ptr = l;    // save this lift into shared data
+            signal(*s);             // signal
         }
         else 
         {
@@ -148,10 +152,9 @@ unsigned long CALLBACK lift_thread(void *p) {
             l.peopleinlift--;        /* one less in lift */
             l.stops[l.position]--;   /* one less waiting */
             Sleep(GETOUTSPEED);      /* wait a while */
-            ////////////////////////////////////////////////////////////////////////////3
-            // ---     /* tell them to get out */
-            signal(l.stopsem[l.position]);
-            ////////////////////////////////////////////////////////////////////////////
+
+            signal(l.stopsem[l.position]);  //signal
+ 
             if (!l.stops[l.position]) /* if it was the last one */
                 char_at_xy(no * 4 + 1 + 2, NFLOORS - l.position, ' ');  /* remove the - */
         }
@@ -181,31 +184,25 @@ unsigned long CALLBACK person_thread(void *p) {
         if (to > from) {	/* if we are going up */
             floor[from].waitingtogoup++;
             char_at_xy(NLIFTS * 4 + floor[from].waitingtogoup + floor[from].waitingtogodown, NFLOORS - from, 0xdc);
-            ////////////////////////////////////////////////////////////////////////////4
-            // ---     /* wait for the lift to arrive */
-            wait(floor[from].up_arrow);
-            ////////////////////////////////////////////////////////////////////////////
+
+            wait(floor[from].up_arrow);     //wait
         }
         else {  /* if we are going down */
             floor[from].waitingtogodown++;
             char_at_xy(NLIFTS * 4 + floor[from].waitingtogodown
                 + floor[from].waitingtogoup, NFLOORS - from, 0xdc);
-            ////////////////////////////////////////////////////////////////////////////5
-            // ---     /* wait for the lift to arrive */
-            wait(floor[from].down_arrow);
-            ////////////////////////////////////////////////////////////////////////////
+
+            wait(floor[from].down_arrow);   //wait
         }
-        ////////////////////////////////////////////////////////////////////////////6
-         //--- l=  /* which lift are we geting in to */
-        l = global_lift_ptr;
-        ////////////////////////////////////////////////////////////////////////////
+
+        l = global_lift_ptr;                //get Lift pointer from shared data
+
         l->stops[to]++;  /* press the button for the floor we want */
         if (l->stops[to] == 1)  /* light up the button if we were the first */
             char_at_xy(l->no * 4 + 1 + 2, NFLOORS - to, '-');
-        ////////////////////////////////////////////////////////////////////////////7
-        // ---           /* wait until we get to the right floor */
-        wait(l->stopsem[to]);
-        ////////////////////////////////////////////////////////////////////////////
+
+        wait(l->stopsem[to]);               //wait
+
         from = to;  /* we have reached our destination */
     }
 }
